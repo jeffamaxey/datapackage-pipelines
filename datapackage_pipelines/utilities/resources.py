@@ -23,10 +23,7 @@ def get_path(descriptor):
     if isinstance(path, str):
         return path
     if isinstance(path, list):
-        if len(path) > 0:
-            return path.pop(0)
-        else:
-            return None
+        return path.pop(0) if len(path) > 0 else None
     assert path is None, '%r' % path
     return None
 

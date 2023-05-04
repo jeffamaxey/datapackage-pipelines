@@ -20,10 +20,7 @@ class PipelineSpec(object):
         self.environment = environment
 
     def __str__(self):
-        return 'PipelineSpec({}, validation_errors={}, ' \
-               'dependencies={}, cache_hash={})'\
-            .format(self.pipeline_id, self.validation_errors,
-                    self.dependencies, self.cache_hash)
+        return f'PipelineSpec({self.pipeline_id}, validation_errors={self.validation_errors}, dependencies={self.dependencies}, cache_hash={self.cache_hash})'
 
     def __repr__(self):
         return str(self)
@@ -49,5 +46,5 @@ class BaseParser(object):
         if root_dir.endswith('/'):
             root_dir = root_dir[:-1]
         if path.startswith(root_dir):
-            path = '.' + path[len(root_dir):]
+            path = f'.{path[len(root_dir):]}'
         return path

@@ -7,5 +7,5 @@ class MyClass():
 
 
 def flow(*_):
-    logging.info('my_object=' + str(MyClass()))
+    logging.info(f'my_object={str(MyClass())}')
     return Flow()

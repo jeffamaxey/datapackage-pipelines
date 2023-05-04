@@ -22,7 +22,7 @@ ExecutionResult = namedtuple('ExecutionResult',
 ProgressReport = namedtuple('ProgressReport',
                             ['pipeline_id', 'row_count', 'success', 'errors', 'stats'])
 
-MAGIC = 'INFO    :(sink): '+SINK_MAGIC
+MAGIC = f'INFO    :(sink): {SINK_MAGIC}'
 
 
 def remote_execute_pipeline(spec, root_dir, use_cache, verbose, progress_report_queue):
@@ -46,13 +46,14 @@ def remote_execute_pipeline(spec, root_dir, use_cache, verbose, progress_report_
                 progress = int(line[len(MAGIC):].strip())
                 progress_report_queue.put(ProgressReport(spec.pipeline_id, progress, None, None, None))
             continue
-        while len(lines) > 0:
+        while lines:
             log = lines.pop(0)
             if verbose:
-                sys.stderr.write('[%s:%s] >>> %s' %
-                                 (spec.pipeline_id, threading.current_thread().name, log))
+                sys.stderr.write(
+                    f'[{spec.pipeline_id}:{threading.current_thread().name}] >>> {log}'
+                )
         lines.append(line)
-    if len(lines) > 0:
+    if lines:
         results = lines.pop(0)
     else:
         if progress_report_queue is not None:
@@ -74,7 +75,9 @@ def remote_execute_pipeline(spec, root_dir, use_cache, verbose, progress_report_
                                                      ))
     except json.decoder.JSONDecodeError:
         if verbose:
-            sys.stderr.write('[%s:%s] >>> %s' % (spec.pipeline_id, threading.current_thread().name, results))
+            sys.stderr.write(
+                f'[{spec.pipeline_id}:{threading.current_thread().name}] >>> {results}'
+            )
         if progress_report_queue is not None:
             progress_report_queue.put(ProgressReport(spec.pipeline_id,
                                                      progress,
@@ -129,7 +132,7 @@ def specs_to_execute(argument, root_dir, status_manager, ignore_missing_deps, di
 
             pending.add(spec.pipeline_id)
 
-    while len(pending) > 0:
+    while pending:
         to_yield = None
         for spec in pipelines(ignore_missing_deps=ignore_missing_deps,
                               root_dir=root_dir, status_manager=status_manager):
@@ -171,7 +174,7 @@ def run_pipelines(pipeline_id_pattern,
        pipeline-id supports the '%' wildcard for any-suffix matching.
        Use 'all' or '%' for running all pipelines"""
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency,
-                                               thread_name_prefix='T') as executor:
+                                                   thread_name_prefix='T') as executor:
         try:
             results = []
             pending_futures = set()
@@ -202,18 +205,15 @@ def run_pipelines(pipeline_id_pattern,
                     spec = None
 
                 if spec is None:
-                    # Wait for all runners to idle...
-                    if len(done_futures) == 0:
-                        if len(pending_futures) > 0:
-                            done_futures, pending_futures = \
-                                concurrent.futures.wait(pending_futures,
-                                                        return_when=concurrent.futures.FIRST_COMPLETED)
-                            continue
-                        else:
-                            break
-                    else:
+                    if len(done_futures) != 0:
                         continue
 
+                    if len(pending_futures) <= 0:
+                        break
+                    done_futures, pending_futures = \
+                        concurrent.futures.wait(pending_futures,
+                                                return_when=concurrent.futures.FIRST_COMPLETED)
+                    continue
                 if len(spec.validation_errors) > 0:
                     results.append(
                         ExecutionResult(spec.pipeline_id,

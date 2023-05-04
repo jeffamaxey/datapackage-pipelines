@@ -28,25 +28,28 @@ def resolve_dependencies(spec: PipelineSpec, all_pipeline_ids, status_mgr):
             ps = status_mgr.get(pipeline_id)
             if not ps.runnable():
                 spec.validation_errors.append(
-                    SpecError('Invalid dependency',
-                              'Cannot run until dependency passes validation: {}'.format(pipeline_id))
+                    SpecError(
+                        'Invalid dependency',
+                        f'Cannot run until dependency passes validation: {pipeline_id}',
+                    )
                 )
             elif ps.dirty():
                 spec.validation_errors.append(
-                    SpecError('Dirty dependency',
-                              'Cannot run until dependency is executed: {}'.format(pipeline_id))
+                    SpecError(
+                        'Dirty dependency',
+                        f'Cannot run until dependency is executed: {pipeline_id}',
+                    )
                 )
             elif ps.get_last_execution() is not None and not ps.get_last_execution().success:
                 spec.validation_errors.append(
-                    SpecError('Dependency unsuccessful',
-                              'Cannot run until dependency "{}" is successfully '
-                              'executed'.format(pipeline_id))
+                    SpecError(
+                        'Dependency unsuccessful',
+                        f'Cannot run until dependency "{pipeline_id}" is successfully executed',
+                    )
                 )
 
             for dep_err in ps.validation_errors:
-                spec.validation_errors.append(
-                    SpecError('From {}'.format(pipeline_id), dep_err)
-                )
+                spec.validation_errors.append(SpecError(f'From {pipeline_id}', dep_err))
 
             pipeline_hash = all_pipeline_ids.get(pipeline_id).cache_hash
             assert pipeline_hash is not None
@@ -62,14 +65,18 @@ def resolve_dependencies(spec: PipelineSpec, all_pipeline_ids, status_mgr):
                     cache_hash += dp.descriptor['hash']
                 else:
                     spec.validation_errors.append(
-                        SpecError('Missing dependency',
-                                  "Couldn't get data from datapackage %s"
-                                  % dp_id))
+                        SpecError(
+                            'Missing dependency',
+                            f"Couldn't get data from datapackage {dp_id}",
+                        )
+                    )
             except DataPackageException:
                 spec.validation_errors.append(
-                    SpecError('Missing dependency',
-                              "Couldn't open datapackage %s"
-                              % dp_id))
+                    SpecError(
+                        'Missing dependency',
+                        f"Couldn't open datapackage {dp_id}",
+                    )
+                )
 
         else:
             spec.validation_errors.append(

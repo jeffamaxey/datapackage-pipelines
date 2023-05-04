@@ -111,23 +111,25 @@ class ProcessorFixtureTestsBase(object):
             actual_data = actual_data[0]
             actual_data = actual_data.split('\n')
             expected_data = data_out.split('\n')
-            assert len(actual_data) == len(expected_data), \
-                "unexpected number of output lines: {}, actual_data = {}" \
-                .format(len(actual_data), actual_data)
+            assert len(actual_data) == len(
+                expected_data
+            ), f"unexpected number of output lines: {len(actual_data)}, actual_data = {actual_data}"
             for line_num, (actual, expected) in enumerate(zip(actual_data,
                                                               expected_data)):
-                line_msg = "output line {}".format(line_num)
+                line_msg = f"output line {line_num}"
                 if len(actual) == 0:
-                    assert len(expected) == 0, \
-                        "{}: did not get any data (but expected some)" \
-                        .format(line_msg)
+                    assert (
+                        len(expected) == 0
+                    ), f"{line_msg}: did not get any data (but expected some)"
                 else:
                     rj_actual = rejsonize(actual)
                     if rj_actual != rejsonize(expected):
-                        print("{}: unexpected data: {} (expected {})".format(line_msg, rj_actual, expected),
-                              file=sys.stderr)
+                        print(
+                            f"{line_msg}: unexpected data: {rj_actual} (expected {expected})",
+                            file=sys.stderr,
+                        )
                     assert json.loads(actual) == json.loads(expected), \
-                        "a: %r, e: %r" % (json.loads(actual), json.loads(expected))
+                            "a: %r, e: %r" % (json.loads(actual), json.loads(expected))
 
 
 def rejsonize(s):

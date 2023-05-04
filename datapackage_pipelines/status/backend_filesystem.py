@@ -27,9 +27,9 @@ class FilesystemBackend(object):
 
     def set_status(self, pipeline_id, status):
         fn = self.fn(pipeline_id)
-        with open(fn+'.tmp', 'w') as f:
+        with open(f'{fn}.tmp', 'w') as f:
             ujson.dump(status, f)
-        os.rename(fn+'.tmp', fn)
+        os.rename(f'{fn}.tmp', fn)
 
     def del_status(self, pipeline_id):
         try:

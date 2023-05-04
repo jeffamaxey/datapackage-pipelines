@@ -55,7 +55,7 @@ def spew(dp, resources_iterator, stats=None, finalizer=None):
         if not os.path.exists('.cache'):
             os.mkdir('.cache')
         cache_filename = os.path.join('.cache', cache)
-        files.append(gzip.open(cache_filename+'.ongoing', 'wt'))
+        files.append(gzip.open(f'{cache_filename}.ongoing', 'wt'))
 
     expected_resources = \
         len(list(filter(streaming, dp.get('resources', []))))
@@ -134,14 +134,13 @@ def spew(dp, resources_iterator, stats=None, finalizer=None):
             f.close()
 
     if len(cache) > 0:
-        os.rename(cache_filename+'.ongoing', cache_filename)
+        os.rename(f'{cache_filename}.ongoing', cache_filename)
 
 
 class StdoutWriter:
 
     def write(self, message):
-        message = message.strip()
-        if message:
+        if message := message.strip():
             logging.info(message)
 
     def flush(self):
@@ -151,8 +150,7 @@ class StdoutWriter:
 class StderrWriter:
 
     def write(self, message):
-        message = message.strip()
-        if message:
+        if message := message.strip():
             logging.error(message)
 
     def flush(self):

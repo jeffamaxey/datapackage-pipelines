@@ -45,8 +45,7 @@ def _filehash(filepath, blocksize=4096):
     sha = hashlib.sha256()
     with open(filepath, 'rb') as fp:
         while 1:
-            data = fp.read(blocksize)
-            if data:
+            if data := fp.read(blocksize):
                 sha.update(data)
             else:
                 break
@@ -97,7 +96,7 @@ class File(object):
             tar_args = (archive_path)
             tar_kwargs = {}
             _return = archive_path
-        tar_kwargs.update({'mode': 'w:gz'})
+        tar_kwargs['mode'] = 'w:gz'
         with closing(tarfile.open(*tar_args, **tar_kwargs)) as tar:
             tar.add(self.path, arcname=self.file)
 
@@ -188,8 +187,9 @@ class Dir(object):
         return sorted(self.iterfiles(pattern, abspath=abspath), key=sort_key, reverse=sort_reverse)
 
     def get(self, pattern, sort_key=lambda k: k, sort_reverse=False, abspath=False):
-        res = self.files(pattern, sort_key=sort_key, sort_reverse=sort_reverse, abspath=abspath)
-        if res:
+        if res := self.files(
+            pattern, sort_key=sort_key, sort_reverse=sort_reverse, abspath=abspath
+        ):
             return res[0]
 
     def itersubdirs(self, pattern=None, abspath=False):
@@ -230,16 +230,12 @@ class Dir(object):
         :rtype: int
         :return: Total directory size in bytes.
         """
-        dir_size = 0
-        for f in self.iterfiles(abspath=True):
-            dir_size += os.path.getsize(f)
-        return dir_size
+        return sum(os.path.getsize(f) for f in self.iterfiles(abspath=True))
 
     def is_excluded(self, path):
         """ Return True if `path' should be excluded
         given patterns in the `exclude_file'. """
-        match = self.globster.match(self.relpath(path))
-        if match:
+        if match := self.globster.match(self.relpath(path)):
             log.debug("{0} matched {1} for exclusion".format(path, match))
             return True
         return False
@@ -259,11 +255,11 @@ class Dir(object):
                 elif not os.path.islink(os.path.join(root, d)):
                     ndirs.append(d)
 
-            nfiles = []
-            for fpath in (os.path.join(root, f) for f in files):
-                if not self.is_excluded(fpath) and not os.path.islink(fpath):
-                    nfiles.append(os.path.relpath(fpath, root))
-
+            nfiles = [
+                os.path.relpath(fpath, root)
+                for fpath in (os.path.join(root, f) for f in files)
+                if not self.is_excluded(fpath) and not os.path.islink(fpath)
+            ]
             yield root, ndirs, nfiles
 
     def find_projects(self, file_identifier=".project"):
@@ -304,7 +300,7 @@ class Dir(object):
             tar_args = [archive_path]
             tar_kwargs = {}
             _return = archive_path
-        tar_kwargs.update({'mode': 'w:gz'})
+        tar_kwargs['mode'] = 'w:gz'
         with closing(tarfile.open(*tar_args, **tar_kwargs)) as tar:
             tar.add(self.path, arcname='', exclude=self.is_excluded)
 
@@ -320,9 +316,7 @@ class DirState(object):
 
     def compute_state(self):
         """ Generate the index. """
-        data = {}
-        data['directory'] = self._dir.path
-        data['files'] = list(self._dir.files())
+        data = {'directory': self._dir.path, 'files': list(self._dir.files())}
         data['subdirs'] = list(self._dir.subdirs())
         data['index'] = self.index()
         return data
@@ -379,12 +373,14 @@ def compute_diff(dir_base, dir_cmp):
      - deleted directories `deleted_dirs'
 
     """
-    data = {}
-    data['deleted'] = list(set(dir_cmp['files']) - set(dir_base['files']))
-    data['created'] = list(set(dir_base['files']) - set(dir_cmp['files']))
-    data['updated'] = []
-    data['deleted_dirs'] = list(set(dir_cmp['subdirs']) - set(dir_base['subdirs']))
-
+    data = {
+        'deleted': list(set(dir_cmp['files']) - set(dir_base['files'])),
+        'created': list(set(dir_base['files']) - set(dir_cmp['files'])),
+        'updated': [],
+        'deleted_dirs': list(
+            set(dir_cmp['subdirs']) - set(dir_base['subdirs'])
+        ),
+    }
     for f in set(dir_cmp['files']).intersection(set(dir_base['files'])):
         if dir_base['index'][f] != dir_cmp['index'][f]:
             data['updated'].append(f)

@@ -15,7 +15,7 @@ def progress_logger(iter, log_progress_rows):
     for i, row in enumerate(iter, 1):
         yield row
         if i % log_progress_rows == 0:
-            logging.info('loaded {} rows'.format(i))
+            logging.info(f'loaded {i} rows')
 
 
 class ResourceLoader(object):
@@ -31,7 +31,9 @@ class ResourceLoader(object):
         if url.startswith(dep_prefix):
             dependency = url[len(dep_prefix):].strip()
             url = get_dependency_datapackage_url(dependency)
-            assert url is not None, "Failed to fetch output datapackage for dependency '%s'" % dependency
+            assert (
+                url is not None
+            ), f"Failed to fetch output datapackage for dependency '{dependency}'"
         stream = self.parameters.get('stream', True)
         required = self.parameters.get('required', True)
         resource = self.parameters.get('resource')
@@ -62,7 +64,7 @@ class ResourceLoader(object):
             dp = self.process_datapackage(dp)
             for i, orig_res in enumerate(dp.resources):
                 if resource_index == i or \
-                        (name_matcher is not None and name_matcher.match(orig_res.descriptor.get('name'))):
+                            (name_matcher is not None and name_matcher.match(orig_res.descriptor.get('name'))):
                     found = True
                     desc = copy.deepcopy(orig_res.descriptor)
                     if 'primaryKey' in desc.get('schema', {}):

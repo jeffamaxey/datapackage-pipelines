@@ -29,17 +29,18 @@ async def enqueue_errors(step, process, queue, debug):
             break
         line = line.decode('utf8').rstrip()
         if len(line) != 0:
-            if len(errors) == 0:
-                if line.startswith('ERROR') or line.startswith('Traceback'):
-                    errors.append(step['run'])
-            if len(errors) > 0:
+            if not errors and (
+                line.startswith('ERROR') or line.startswith('Traceback')
+            ):
+                errors.append(step['run'])
+            if errors:
                 errors.append(line)
                 if len(errors) > 1000:
                     errors.pop(1)
             if '__flow' in step:
-                line = "(F) {}: {}".format(step['__flow'], line)
+                line = f"(F) {step['__flow']}: {line}"
             else:
-                line = "{}: {}".format(step['run'], line)
+                line = f"{step['run']}: {line}"
             if debug:
                 logging.info(line)
             await queue.put(line)
@@ -99,13 +100,14 @@ def create_process(args, cwd, wfd, rfd):
         pass_fds.remove(None)
     rfd = asyncio.subprocess.PIPE if rfd is None else rfd
     wfd = asyncio.subprocess.DEVNULL if wfd is None else wfd
-    ret = asyncio.create_subprocess_exec(*args,
-                                         stdin=rfd,
-                                         stdout=wfd,
-                                         stderr=asyncio.subprocess.PIPE,
-                                         pass_fds=pass_fds,
-                                         cwd=cwd)
-    return ret
+    return asyncio.create_subprocess_exec(
+        *args,
+        stdin=rfd,
+        stdout=wfd,
+        stderr=asyncio.subprocess.PIPE,
+        pass_fds=pass_fds,
+        cwd=cwd
+    )
 
 
 async def process_death_waiter(process):
@@ -185,17 +187,15 @@ async def construct_process_pipeline(pipeline_steps, pipeline_cwd, errors, debug
     )
 
     def wait_for_finish(_error_collectors,
-                        _error_queue,
-                        _error_aggregator):
+                            _error_queue,
+                            _error_aggregator):
         async def _func(failed_index=None):
             *errors, count = await asyncio.gather(*_error_collectors)
-            if failed_index is not None:
-                errors = errors[failed_index]
-            else:
-                errors = None
+            errors = errors[failed_index] if failed_index is not None else None
             await _error_queue.put(None)
             await _error_aggregator
             return count, errors
+
         return _func
 
     return processes, \
@@ -247,12 +247,9 @@ async def async_execute_pipeline(pipeline_id,
     success = True
     pending = [asyncio.ensure_future(process_death_waiter(process))
                for process in processes]
-    index_for_pid = dict(
-        (p.pid, i)
-        for i, p in enumerate(processes)
-    )
+    index_for_pid = {p.pid: i for i, p in enumerate(processes)}
     failed_index = None
-    while len(pending) > 0:
+    while pending:
         done = []
         try:
             done, pending = \

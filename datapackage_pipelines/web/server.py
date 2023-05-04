@@ -24,14 +24,11 @@ YAML_DUMPER = yaml.CDumper if 'CDumper' in yaml.__dict__ else yaml.Dumper
 
 
 def datestr(x):
-    if x is None:
-        return ''
-    return str(datetime.datetime.fromtimestamp(x))
+    return '' if x is None else str(datetime.datetime.fromtimestamp(x))
 
 
 def yamlize(x):
-    ret = yaml.dump(x, default_flow_style=False, Dumper=YAML_DUMPER)
-    return ret
+    return yaml.dump(x, default_flow_style=False, Dumper=YAML_DUMPER)
 
 
 markdown = mistune.Markdown(hard_wrap=True)
@@ -47,10 +44,7 @@ def make_hierarchies(statuses):
         for child in children_:
             child_key = child['id'].pop(0)
             groups_.setdefault(child_key, []).append(child)
-        children_ = dict(
-            (k, group(v))
-            for k, v in groups_.items()
-        )
+        children_ = {k: group(v) for k, v in groups_.items()}
         for p in pipelines:
             p['id'] = p['id'][0]
         return {
@@ -114,7 +108,7 @@ def main(pipeline_path=None):
     # If we have a pipeline_path, filter the pipeline ids.
     if pipeline_path is not None:
         if not pipeline_path.startswith('./'):
-            pipeline_path = './' + pipeline_path
+            pipeline_path = f'./{pipeline_path}'
 
         pipeline_ids = [p for p in pipeline_ids if p.startswith(pipeline_path)]
 
@@ -190,7 +184,7 @@ def pipeline_raw_api_status():
 @basic_auth_required
 def pipeline_raw_api(pipeline_id):
     if not pipeline_id.startswith('./'):
-        pipeline_id = './' + pipeline_id
+        pipeline_id = f'./{pipeline_id}'
     pipeline_status = status.get(pipeline_id)
     if not pipeline_status.pipeline_details:
         abort(404)
@@ -227,7 +221,7 @@ def pipeline_raw_api(pipeline_id):
 def pipeline_api(field, pipeline_id):
 
     if not pipeline_id.startswith('./'):
-        pipeline_id = './' + pipeline_id
+        pipeline_id = f'./{pipeline_id}'
     pipeline_status = status.get(pipeline_id)
     if not pipeline_status.pipeline_details:
         abort(404)
@@ -251,8 +245,7 @@ def pipeline_api(field, pipeline_id):
 
 
 def _make_badge_response(subject, text, colour):
-    image_url = 'https://img.shields.io/badge/{}-{}-{}.svg'.format(
-        subject, text, colour)
+    image_url = f'https://img.shields.io/badge/{subject}-{text}-{colour}.svg'
     r = requests.get(image_url)
     buffer_image = BytesIO(r.content)
     buffer_image.seek(0)
@@ -267,7 +260,7 @@ def _make_badge_response(subject, text, colour):
 def badge(pipeline_id):
     '''An individual pipeline status'''
     if not pipeline_id.startswith('./'):
-        pipeline_id = './' + pipeline_id
+        pipeline_id = f'./{pipeline_id}'
     pipeline_status = status.get(pipeline_id)
 
     status_color = 'lightgray'
@@ -294,7 +287,7 @@ def badge_collection(pipeline_path):
     all_pipeline_ids = sorted(status.all_pipeline_ids())
 
     if not pipeline_path.startswith('./'):
-        pipeline_path = './' + pipeline_path
+        pipeline_path = f'./{pipeline_path}'
 
     # Filter pipeline ids to only include those that start with pipeline_path.
     path_pipeline_ids = \
@@ -309,17 +302,14 @@ def badge_collection(pipeline_path):
         statuses.append(status_text)
 
     status_color = 'lightgray'
-    status_counter = Counter(statuses)
-    if status_counter:
+    if status_counter := Counter(statuses):
         if len(status_counter) == 1 and status_counter['succeeded'] > 0:
             status_color = 'brightgreen'
         elif status_counter['failed'] > 0:
             status_color = 'red'
         elif status_counter['failed'] == 0:
             status_color = 'yellow'
-        status_text = \
-            ', '.join(['{} {}'.format(v, k)
-                       for k, v in status_counter.items()])
+        status_text = ', '.join([f'{v} {k}' for k, v in status_counter.items()])
     else:
         status_text = "not found"
 

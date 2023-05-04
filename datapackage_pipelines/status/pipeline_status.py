@@ -28,7 +28,7 @@ class PipelineStatus(object):
         self.cache_hash = cache_hash
 
     def __load(self):
-        data = self.backend.get_status('PipelineStatus:' + self.pipeline_id)
+        data = self.backend.get_status(f'PipelineStatus:{self.pipeline_id}')
         if data is None:
             data = {}
         self.pipeline_details = data.get('pipeline_details', {})
@@ -49,7 +49,7 @@ class PipelineStatus(object):
     def __save(self):
         # logging.debug('SAVING PipelineStatus %s -> %r' % (self.pipeline_id, self.executions))
         self.backend.register_pipeline_id(self.pipeline_id)
-        self.backend.set_status('PipelineStatus:' + self.pipeline_id, dict(self))
+        self.backend.set_status(f'PipelineStatus:{self.pipeline_id}', dict(self))
 
     def save(self):
         self.__save()
@@ -72,26 +72,23 @@ class PipelineStatus(object):
 
     @property
     def last_execution(self):
-        if self._executions is not None:
-            if len(self._executions) > 0:
-                return self._executions[0]
-        else:
+        if self._executions is None:
             if len(self._execution_ids) > 0:
                 if self._last_execution is None:
                     self._last_execution = \
-                        PipelineExecution.from_execution_id(self.backend,
+                            PipelineExecution.from_execution_id(self.backend,
                                                             self._execution_ids[0])
                 return self._last_execution
+
+        elif len(self._executions) > 0:
+            return self._executions[0]
 
     def errors(self):
         if not self.runnable():
             return ['%s :%s' % tuple(err)
                     for err in self.validation_errors]
-        else:
-            ex = self.last_execution
-            if ex is not None:
-                return ex.error_log
-        return []
+        ex = self.last_execution
+        return ex.error_log if ex is not None else []
 
     def runnable(self):
         return len(self.validation_errors) == 0
@@ -172,14 +169,8 @@ class PipelineStatus(object):
         if last_execution is None:
             return 'INIT'
         if last_execution.success is None:
-            if last_execution.start_time is None:
-                return 'QUEUED'
-            else:
-                return 'RUNNING'
-        if last_execution.success:
-            return 'SUCCEEDED'
-        else:
-            return 'FAILED'
+            return 'QUEUED' if last_execution.start_time is None else 'RUNNING'
+        return 'SUCCEEDED' if last_execution.success else 'FAILED'
 
     def update_hooks(self, event, *, success=None, errors=None, stats=None, log=None, blocking=False):
         hooks = self.pipeline_details.get('hooks')

@@ -12,8 +12,7 @@ if datapackage is None:
 datapackage.setdefault('resources', [])
 
 for param in ['url', 'name']:
-    assert param in parameters, \
-        "You must define {} in your parameters".format(param)
+    assert param in parameters, f"You must define {param} in your parameters"
 
 url = parameters.pop('url')
 if url.startswith('env://'):

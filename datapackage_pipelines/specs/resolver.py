@@ -58,10 +58,8 @@ def load_module(module):
     global _tried_imports
     if module in _tried_imports:
         return _tried_imports[module]
-    module_name = 'datapackage_pipelines_'+module
-    ret = None
-    if find_spec(module_name):
-        ret = import_module(module_name)
+    module_name = f'datapackage_pipelines_{module}'
+    ret = import_module(module_name) if find_spec(module_name) else None
     _tried_imports[module] = ret
     return ret
 

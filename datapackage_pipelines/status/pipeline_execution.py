@@ -25,7 +25,7 @@ class PipelineExecution(object):
 
     @staticmethod
     def from_execution_id(backend, execution_id):
-        data = backend.get_status('PipelineExecution:' + execution_id)
+        data = backend.get_status(f'PipelineExecution:{execution_id}')
         return PipelineExecution(
             backend,
             data['pipeline_id'],
@@ -59,7 +59,7 @@ class PipelineExecution(object):
 
     def __save(self):
         # logging.debug('SAVING PipelineExecution %s/%s -> %r' % (self.pipeline_id, self.execution_id, dict(self)))
-        self.backend.set_status('PipelineExecution:' + self.execution_id, dict(self))
+        self.backend.set_status(f'PipelineExecution:{self.execution_id}', dict(self))
 
     def queue_execution(self, trigger):
         if self.queue_time is not None:

@@ -10,7 +10,9 @@ url = parameters['url']
 if url.startswith(dep_prefix):
     dependency = url[len(dep_prefix):].strip()
     url = get_dependency_datapackage_url(dependency)
-    assert url is not None, "Failed to fetch output datapackage for dependency '%s'" % dependency
+    assert (
+        url is not None
+    ), f"Failed to fetch output datapackage for dependency '{dependency}'"
 
 datapackage = datapackage.DataPackage(url)
 for k, v in datapackage.descriptor.items():

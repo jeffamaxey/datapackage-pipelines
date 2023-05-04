@@ -113,9 +113,8 @@ class DumperBase(object):
     @staticmethod
     def insert_hash_in_path(descriptor, hash):
         path = descriptor.get('path')
-        if isinstance(path, list):
-            if len(path) > 0:
-                path = path[0]
+        if isinstance(path, list) and len(path) > 0:
+            path = path[0]
 
         assert isinstance(path, str), '%r' % path
 
@@ -140,9 +139,7 @@ class DumperBase(object):
                                        resource_spec,
                                        parameters,
                                        datapackage)
-            ret = self.row_counter(datapackage, resource_spec, ret)
-            yield ret
-
+            yield self.row_counter(datapackage, resource_spec, ret)
         # Calculate datapackage hash
         if self.datapackage_hash:
             datapackage_hash = hashlib.md5(
@@ -288,7 +285,7 @@ class FileDumper(DumperBase):
 
             writer = self.file_formatters[spec['name']].initialize_file(temp_file, headers)
 
-            fields = dict((field['name'], field) for field in fields)
+            fields = {field['name']: field for field in fields}
 
             return self.rows_processor(resource,
                                        spec,
@@ -304,7 +301,7 @@ class FileDumper(DumperBase):
         tfile.seek(0)
         hasher = hashlib.md5()
         data = 'x'
-        while len(data) > 0:
+        while data != "":
             data = tfile.read(1024)
             if isinstance(data, str):
                 hasher.update(data.encode('utf8'))

@@ -23,9 +23,11 @@ class GeneratorBase(object):
         return True
 
     def internal_generate(self, source, base):
-        if not self.internal_validate(source):
-            return None
-        return self.generate_pipeline(source, base)
+        return (
+            self.generate_pipeline(source, base)
+            if self.internal_validate(source)
+            else None
+        )
 
     @classmethod
     def get_schema(cls):

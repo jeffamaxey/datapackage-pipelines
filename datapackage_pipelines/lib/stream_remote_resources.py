@@ -49,9 +49,7 @@ def _reader(opener, _url, max_row=-1):
         if len(values) == 1 and '' in values:
             # In case of empty rows, just skip them
             continue
-        output = dict(zip(_headers, _schema.cast_row(row[:num_headers])))
-        yield output
-
+        yield dict(zip(_headers, _schema.cast_row(row[:num_headers])))
         i += 1
         if i % 10000 == 0:
             logging.info('%s: %d rows', filename, i)
@@ -69,14 +67,14 @@ def dedupe(headers):
         if hdr is None:
             break
         hdr = str(hdr).strip()
-        if len(hdr) == 0:
+        if not hdr:
             continue
         if hdr in _dedupped_headers:
             i = 0
             deduped_hdr = hdr
             while deduped_hdr in _dedupped_headers:
                 i += 1
-                deduped_hdr = '%s_%s' % (hdr, i)
+                deduped_hdr = f'{hdr}_{i}'
             hdr = deduped_hdr
         _dedupped_headers.append(hdr)
     return _dedupped_headers
@@ -236,7 +234,7 @@ for resource in datapackage['resources']:
 
         path = get_path(resource)
         if path is None or path == PATH_PLACEHOLDER:
-            path = os.path.join('data', name + '.csv')
+            path = os.path.join('data', f'{name}.csv')
             resource['path'] = path
 
         resource[PROP_STREAMING] = True

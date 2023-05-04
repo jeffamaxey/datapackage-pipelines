@@ -27,8 +27,10 @@ class FileFormat():
 
     def __transform_row(self, row, fields):
         try:
-            return dict((k, self.__transform_value(v, fields[k]['type']))
-                        for k, v in row.items())
+            return {
+                k: self.__transform_value(v, fields[k]['type'])
+                for k, v in row.items()
+            }
         except Exception:
             logging.exception('Failed to transform row %r', row)
             raise
@@ -81,7 +83,7 @@ class CSVFormat(FileFormat):
     def prepare_resource(self, resource):
         resource['encoding'] = 'utf-8'
         basename, _ = os.path.splitext(get_path(resource))
-        resource['path'] = basename + '.csv'
+        resource['path'] = f'{basename}.csv'
         resource['format'] = 'csv'
         resource['dialect'] = dict(
             lineTerminator='\r\n',
@@ -133,7 +135,7 @@ class JSONFormat(FileFormat):
     def prepare_resource(self, resource):
         resource['encoding'] = 'utf-8'
         basename, _ = os.path.splitext(get_path(resource))
-        resource['path'] = basename + '.json'
+        resource['path'] = f'{basename}.json'
         resource['format'] = 'json'
         super(JSONFormat, self).prepare_resource(resource)
 

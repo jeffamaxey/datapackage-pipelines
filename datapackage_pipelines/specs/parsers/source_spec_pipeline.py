@@ -29,8 +29,7 @@ class SourceSpecPipelineParser(BaseParser):
         generator = resolve_generator(module_name)
 
         if generator is None:
-            message = 'Unknown source description kind "{}" in {}' \
-                .format(module_name, fullpath)
+            message = f'Unknown source description kind "{module_name}" in {fullpath}'
             error = SpecError('Unknown source kind', message)
             yield PipelineSpec(pipeline_id=module_name,
                                path=dirpath,
@@ -54,15 +53,13 @@ class SourceSpecPipelineParser(BaseParser):
                                            pipeline_details=pipeline_details,
                                            source_details=source_spec)
             except Exception as e:
-                message = '"{}" in {}' \
-                    .format(e, fullpath)
+                message = f'"{e}" in {fullpath}'
                 error = SpecError('Error converting source', message)
                 yield PipelineSpec(pipeline_id=pipeline_id,
                                    path=dirpath, validation_errors=[error],
                                    pipeline_details={'pipeline': []})
         else:
-            message = 'Invalid source description for "{}" in {}' \
-                .format(module_name, fullpath)
+            message = f'Invalid source description for "{module_name}" in {fullpath}'
             error = SpecError('Invalid Source', message)
             yield PipelineSpec(pipeline_id=pipeline_id,
                                path=dirpath,

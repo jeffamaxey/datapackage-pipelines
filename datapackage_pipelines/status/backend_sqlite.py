@@ -24,9 +24,7 @@ class Sqlite3Dict(object):
             (key,)
         ).fetchone()
         conn.close()
-        if result is not None:
-            return json.loads(result[0])
-        return None
+        return json.loads(result[0]) if result is not None else None
 
     def __setitem__(self, key, value):
         conn = sqlite3.connect(self.filename)
@@ -82,8 +80,7 @@ class SqliteBackend(object):
         self.db[self.ALL_PIPELINES_KEY] = []
 
     def all_pipeline_ids(self):
-        all_ids = sorted(self.db[self.ALL_PIPELINES_KEY])
-        return all_ids
+        return sorted(self.db[self.ALL_PIPELINES_KEY])
 
     def all_statuses(self):
         all_ids = sorted(self.db[self.ALL_PIPELINES_KEY])

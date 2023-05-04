@@ -61,7 +61,7 @@ def find_specs(root_dir='.') -> PipelineSpec:
                             spec = yaml.load(contents, Loader=YAML_LOADER)
                             yield from parser.to_pipeline(spec, fullpath, root_dir)
                         except yaml.YAMLError as e:
-                            error = SpecError('Invalid Spec File %s' % fullpath, str(e))
+                            error = SpecError(f'Invalid Spec File {fullpath}', str(e))
                             yield PipelineSpec(path=dirpath, validation_errors=[error])
 
 
@@ -101,13 +101,15 @@ def pipelines(prefixes=None, ignore_missing_deps=False, root_dir='.', status_man
 
             yield spec
 
-        if found and len(deferred) > 0:
+        if found and deferred:
             specs = iter((x[0] for x in deferred))
         else:
             for spec, missing in deferred:
                 spec.validation_errors.append(
-                    SpecError('Missing dependency',
-                              'Failed to find a dependency: {}'.format(missing))
+                    SpecError(
+                        'Missing dependency',
+                        f'Failed to find a dependency: {missing}',
+                    )
                 )
                 yield spec
             specs = None

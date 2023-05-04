@@ -7,4 +7,4 @@ class SpecError(NamedTuple):
     long_msg: str
 
     def __str__(self):
-        return '{}: {}'.format(self.short_msg, self.long_msg)
+        return f'{self.short_msg}: {self.long_msg}'

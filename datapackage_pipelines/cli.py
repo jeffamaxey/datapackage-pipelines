@@ -21,13 +21,11 @@ def cli(ctx):
         click.echo('Available Pipelines:')
         for spec in pipelines():  # type: PipelineSpec
             ps = status_mgr().get(spec.pipeline_id)
-            click.echo('- {} {}{}'
-                       .format(spec.pipeline_id,
-                               '(*)' if ps.dirty() else '',
-                               '(E)' if len(spec.validation_errors) > 0 else ''))
+            click.echo(
+                f"- {spec.pipeline_id} {'(*)' if ps.dirty() else ''}{'(E)' if len(spec.validation_errors) > 0 else ''}"
+            )
             for error in spec.validation_errors:
-                click.echo('\t{}: {}'.format(error.short_msg,
-                                             error.long_msg))
+                click.echo(f'\t{error.short_msg}: {error.long_msg}')
 
 
 @cli.command()
@@ -78,10 +76,17 @@ def run(pipeline_id, verbose, use_cache, dirty, force, concurrency, slave):
                 else:
                     print('\x1b[2K%s: \x1b[31mFAILURE, processed %s rows\x1b[0m' % (pid, count))
 
-    results = run_pipelines(pipeline_id, '.', use_cache,
-                            dirty, force, concurrency,
-                            verbose, progress_cb if not verbose else None,
-                            slave)
+    results = run_pipelines(
+        pipeline_id,
+        '.',
+        use_cache,
+        dirty,
+        force,
+        concurrency,
+        verbose,
+        None if verbose else progress_cb,
+        slave,
+    )
     if not slave:
         logging.info('RESULTS:')
         errd = False

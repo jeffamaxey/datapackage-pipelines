@@ -8,7 +8,7 @@ class XLSXFormat(CSVFormat):
     def prepare_resource(self, resource):
         super(XLSXFormat, self).prepare_resource(resource)
         basename, _ = os.path.splitext(get_path(resource))
-        resource['path'] = basename + '.xlsx'
+        resource['path'] = f'{basename}.xlsx'
         resource['format'] = 'xlsx'
 
     def initialize_file(self, file, headers):

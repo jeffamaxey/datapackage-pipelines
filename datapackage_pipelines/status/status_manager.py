@@ -22,9 +22,7 @@ class StatusManager(object):
 
     def get_errors(self, _id):
         ex = self.get(_id).get_last_execution()
-        if ex is not None:
-            return ex.error_log
-        return []
+        return ex.error_log if ex is not None else []
 
     def initialize(self):
         self.backend.reset()

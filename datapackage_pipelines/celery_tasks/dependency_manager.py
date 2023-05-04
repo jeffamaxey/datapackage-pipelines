@@ -22,11 +22,11 @@ class DependencyManager(object):
 
     @staticmethod
     def dependents_key(x):
-        return 'Dependents:%s' % x
+        return f'Dependents:{x}'
 
     @staticmethod
     def dependencies_key(x):
-        return 'Dependencies:%s' % x
+        return f'Dependencies:{x}'
 
     @staticmethod
     def encode(x):

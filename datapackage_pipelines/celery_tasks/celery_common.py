@@ -16,24 +16,29 @@ def get_celery_app(**kwargs):
 
     broker = os.environ.get('DPP_CELERY_BROKER', 'redis://localhost:6379/6')
 
-    conf = dict(
-        CELERY_TIMEZONE='UTC',
-        CELERY_REDIRECT_STDOUTS=False,
-        BROKER_URL=broker,
-        CELERY_RESULT_BACKEND=broker,
-        CELERYD_LOG_LEVEL="DEBUG",
-        CELERY_TASK_SERIALIZER='json',
-        CELERY_RESULT_SERIALIZER='json',
-        CELERY_ACCEPT_CONTENT=['json'],
-        CELERYD_LOG_FORMAT='[%(asctime)s: %(levelname)s/%(processName)s(%(process)d)] %(message)s',
-        CELERY_ROUTES={
-            REGULAR_TASK_NAME: {'queue': 'datapackage-pipelines'},
-            SCHEDULED_TASK_NAME: {'queue': 'datapackage-pipelines-management'},
-            MANAGEMENT_TASK_NAME: {'queue': 'datapackage-pipelines-management'},
-        }
+    conf = (
+        dict(
+            CELERY_TIMEZONE='UTC',
+            CELERY_REDIRECT_STDOUTS=False,
+            BROKER_URL=broker,
+            CELERY_RESULT_BACKEND=broker,
+            CELERYD_LOG_LEVEL="DEBUG",
+            CELERY_TASK_SERIALIZER='json',
+            CELERY_RESULT_SERIALIZER='json',
+            CELERY_ACCEPT_CONTENT=['json'],
+            CELERYD_LOG_FORMAT='[%(asctime)s: %(levelname)s/%(processName)s(%(process)d)] %(message)s',
+            CELERY_ROUTES={
+                REGULAR_TASK_NAME: {'queue': 'datapackage-pipelines'},
+                SCHEDULED_TASK_NAME: {
+                    'queue': 'datapackage-pipelines-management'
+                },
+                MANAGEMENT_TASK_NAME: {
+                    'queue': 'datapackage-pipelines-management'
+                },
+            },
+        )
+        | kwargs
     )
-    conf.update(kwargs)
-
     celery_app.conf.update(**conf)
 
     return celery_app

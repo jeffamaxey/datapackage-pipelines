@@ -33,14 +33,10 @@ class LazyJsonLine(LazyDict):
         return json.loads(*self.args, **self.kwargs)
 
     def __str__(self):
-        if self.inner is not None:
-            return str(self.inner)
-        return self.line
+        return str(self.inner) if self.inner is not None else self.line
 
     def __repr__(self):
-        if self.inner is not None:
-            return repr(self.inner)
-        return self.line
+        return repr(self.inner) if self.inner is not None else self.line
 
 
 class CommonJSONDecoder(_json.JSONDecoder):
@@ -124,19 +120,17 @@ def _dumpl(*args, **kwargs):
     if isinstance(obj, LazyJsonLine):
         if not obj.dirty:
             return obj.line
-        else:
-            kwargs['cls'] = CommonJSONEncoder
-            return _json.dumps(obj.inner, **kwargs)
+        kwargs['cls'] = CommonJSONEncoder
+        return _json.dumps(obj.inner, **kwargs)
     kwargs['cls'] = CommonJSONEncoder
     return _json.dumps(*args, **kwargs)
 
 
 def _loadl(*args, **kwargs):
-    if args[0][0] == '{':
-        kwargs['cls'] = CommonJSONDecoder
-        return LazyJsonLine(args, kwargs)
-    else:
+    if args[0][0] != '{':
         return _loads(*args, **kwargs)
+    kwargs['cls'] = CommonJSONDecoder
+    return LazyJsonLine(args, kwargs)
 
 
 def _dumps(*args, **kwargs):

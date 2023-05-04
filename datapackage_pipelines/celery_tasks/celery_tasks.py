@@ -93,13 +93,42 @@ def update_pipelines(action, completed_pipeline_id, completed_trigger):
                 spec.validation_errors,
                 spec.cache_hash)
 
-        if action == 'init':
+        if (
+            action != 'init'
+            and action != 'update'
+            and action == 'complete'
+            and completed_pipeline_id in spec.dependencies
+        ):
+            logging.info("DEPENDENT Pipeline: %s (%d errors) (from ...%s), trigger=%s",
+                         spec.pipeline_id, len(spec.validation_errors),
+                         os.path.basename(completed_pipeline_id),
+                         completed_trigger)
+            ps.save()
+        elif (
+            action != 'init'
+            and action != 'update'
+            and action == 'complete'
+            or action != 'init'
+            and action != 'update'
+            and action == 'scheduled'
+            and completed_pipeline_id != spec.pipeline_id
+        ):
+            continue
+
+        elif (
+            action != 'init'
+            and action != 'update'
+            and action == 'scheduled'
+            or action not in ['init', 'update']
+        ):
+            pass
+        elif action == 'init':
             psle = ps.get_last_execution()
             if psle is not None and not psle.finish_time:
                 psle.invalidate()
                 psle.finish_execution(False, {}, ['Cancelled'])
 
-        elif action == 'update':
+        else:
             if spec.pipeline_id not in status_all_pipeline_ids:
                 dm.update(spec)
                 logging.info("NEW Pipeline: %s", spec)
@@ -108,29 +137,18 @@ def update_pipelines(action, completed_pipeline_id, completed_trigger):
                           spec.pipeline_id, ps.dirty(), len(ps.executions), ps.cache_hash,
                           ps.executions[0].cache_hash if len(ps.executions) > 0 else None)
 
-        elif action == 'complete':
-            if completed_pipeline_id in spec.dependencies:
-                logging.info("DEPENDENT Pipeline: %s (%d errors) (from ...%s), trigger=%s",
-                             spec.pipeline_id, len(spec.validation_errors),
-                             os.path.basename(completed_pipeline_id),
-                             completed_trigger)
-                ps.save()
-            else:
-                continue
-
-        elif action == 'scheduled':
-            if completed_pipeline_id != spec.pipeline_id:
-                continue
-
         last_successful = ps.state() == 'SUCCEEDED'
         if ps.runnable() and \
                 (ps.dirty() or
                  completed_trigger or
                  (action == 'init' and not last_successful)):
-            queued = queue_pipeline(ps, spec,
-                                    'dirty-task-%s' % action
-                                    if completed_trigger is None
-                                    else completed_trigger)
+            queued = queue_pipeline(
+                ps,
+                spec,
+                f'dirty-task-{action}'
+                if completed_trigger is None
+                else completed_trigger,
+            )
             if queued:
                 executed_count += 1
                 if executed_count == 4 and action == 'update':
